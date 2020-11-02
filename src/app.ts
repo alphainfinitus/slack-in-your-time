@@ -1,73 +1,45 @@
-import { App } from '@slack/bolt';
+import { App, LogLevel } from '@slack/bolt';
+import _ from 'lodash';
+import * as Middleware from './middleware';
+import * as Controllers from './controller';
 
 export default async function main() {
     // Initializes your app with your bot token and signing secret
     const app = new App({
         token: process.env.SLACK_BOT_TOKEN,
         signingSecret: process.env.SLACK_SIGNING_SECRET,
+        logLevel: LogLevel.DEBUG,
     });
 
-    // Listens to incoming messages that contain "hello"
-    app.message('change time', async ({ message, say }) => {
-        // say() sends a message to the channel where the event was triggered
-        await say({
-            blocks: [
-                {
-                    type: 'section',
-                    text: {
-                        type: 'mrkdwn',
-                        text:
-                            "Hey! Looks like you said: *{local_date}*\nWould you like me to convert this to everyone's local time?",
-                    },
-                },
-                {
-                    type: 'actions',
-                    elements: [
-                        {
-                            type: 'button',
-                            text: {
-                                type: 'plain_text',
-                                emoji: true,
-                                text: 'Yes',
-                            },
-                            style: 'primary',
-                            value: 'click_me_123',
-                            action_id: 'btn_okay',
-                        },
-                        {
-                            type: 'button',
-                            text: {
-                                type: 'plain_text',
-                                emoji: true,
-                                text: 'No',
-                            },
-                            style: 'danger',
-                            value: 'click_me_123',
-                            action_id: 'btn_decline',
-                        },
-                    ],
-                },
-            ],
-            text: `Hey there <@${message.user}>!`,
-        });
+    app.message('echo debug', Middleware.contextChannelMembers, async ({ context, say, body }) => {
+        console.log(JSON.stringify({ context, body }));
+        await say(`Context:\n${JSON.stringify({ context, body })}`);
     });
 
-    app.action('btn_okay', async ({ body, ack, say }) => {
+    app.message(Middleware.preventBotMessages, Middleware.messageHasTimeRef, Controllers.promptMsgDateConvert);
+
+    app.action('convert_date', async ({ body, ack, say, context }) => {
+        console.log(JSON.stringify({ context, body }));
         // Acknowledge the action
         await ack();
-        await say(`<@${body.user.id}> clicked the button`);
+        await say(JSON.stringify({ context, body }));
     });
 
-    app.action('btn_decline', async ({ body, ack, say }) => {
+    app.action('dismiss_convert', async ({ body, ack, say }) => {
         // Acknowledge the action
         await ack();
         await say(`no? Really?!`);
     });
 
+    app.error(async (error) => {
+        //todo: Check the details of the error to handle cases where you should retry sending a message or stop the app
+        console.error(error);
+    });
+
     (async () => {
-        // Start your app
+        // start the app
         await app.start(process.env.PORT || 3000);
 
-        console.log('⚡️ Bolt app is running!');
+        console.log('⚡️ Slack app is running!');
     })();
 }
