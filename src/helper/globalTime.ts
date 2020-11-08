@@ -2,35 +2,26 @@ import * as chrono from 'chrono-node';
 import moment from 'moment-timezone';
 import _ from 'lodash';
 import { EventContext } from '../model';
-
-/**
- * A semantic wrapper for moment.js.
- * This function will return the current time based on the given timezone.
- * Refer to https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for details.
- * @param timezone TZ database name (ex: Africa/Abidjan)
- */
-export const currentTimeInZone = (timezone: string) => {
-    if (!moment.tz(timezone).isValid()) throw new Error(`Invalid timezone ${timezone} was given`);
-
-    // just to be safe, we first get the current time in UTC and convert that to the given timezone
-    return moment.utc().tz(timezone);
-};
+import { MessageEvent } from '@slack/bolt';
 
 /**
  * Parses the given message string to determine the full date that it is referencing to.
  * The result will contain the full moment.js object with the proper timezone.
- * @param message message string that contains a reference to time
- * @param senderContext message sender's time context which includes the send time and the timezone
+ * @param messageEvent message event that we want to parse
+ * @param senderTz message sender's timezone object
  */
-export const parseTimeReference = (message: string, senderContext: moment.Moment) => {
-    const senderTimezone = senderContext.zoneName();
-    const parsedDate = chrono.casual.parse(message, senderContext.toDate());
+export const parseTimeReference = (messageEvent: MessageEvent, senderTz: moment.MomentZone) => {
+    const message = messageEvent.text;
+    if (!message) throw new Error('No message was passed to parse');
+    const sentTime = moment.unix(parseInt(messageEvent.ts)).tz(senderTz.name, true);
+    //const senderTimezone = senderContext.tz.name;
+    const parsedDate = chrono.casual.parse(message, sentTime.toDate());
     if (!parsedDate || parsedDate.length < 1) return undefined;
 
     const timeContext = _.map(parsedDate, (date) => {
-        const start = moment.tz(date.start.date(), senderTimezone);
-        const end = date.end && moment.tz(date.end.date(), senderTimezone);
-        const tz = senderTimezone;
+        const start = moment.tz(date.start.date(), senderTz.name);
+        const end = date.end && moment.tz(date.end.date(), senderTz.name);
+        const tz = senderTz.name;
 
         return {
             sourceMsg: message,
