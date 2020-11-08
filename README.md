@@ -1,6 +1,6 @@
 # Slack In Your Time
 
-![logo](img/banner.png)
+![logo](https://raw.githubusercontent.com/hoonsubin/slack-in-your-time/56e01dd23e0e11a2df4aee0ff8ff107a10d06cfe/img/banner.png)
 
 [![Support me on Patreon](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3Dteamstep%26type%3Dpatrons&style=for-the-badge)](https://patreon.com/teamstep)
 
