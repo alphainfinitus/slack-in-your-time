@@ -1,133 +1,49 @@
+import { Users } from '../model';
+import moment from 'moment-timezone';
+
 interface HomeBlockProps {
-    userId: string;
+    userInfo: Users.User;
 }
 
 export const appHomeBlock = (props: HomeBlockProps) => {
-    const today = new Date();
+    const timezone = props.userInfo.tz || moment.tz.guess();
+
+    const time = moment.tz(Date.now(), timezone);
+    // todo: make the app home block content be more useful
     return [
         {
             type: 'header',
             text: {
                 type: 'plain_text',
-                text: 'Slack in Your Time Debugger',
-                emoji: true,
+                text: 'Slack In Your Time Home',
             },
         },
         {
-            type: 'divider',
+            type: 'section',
+            text: {
+                type: 'plain_text',
+                text: `Your local time is ${time.toString()}.`,
+                emoji: true,
+            },
         },
         {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: `Local time of <@${props.userId}>: ${today.toString()}`,
+                text: 'This application is still working in progress. If you encounter any issues, please consider opening a bug report in Github.\nThank you for your support!',
             },
-        },
-        {
-            type: 'input',
-            element: {
-                type: 'static_select',
-                placeholder: {
+            accessory: {
+                type: 'button',
+                text: {
                     type: 'plain_text',
-                    text: 'Select an item',
+                    text: 'Open Bug Report',
                     emoji: true,
                 },
-                options: [
-                    {
-                        text: {
-                            type: 'plain_text',
-                            text: 'JST (UTC+9:00)',
-                            emoji: true,
-                        },
-                        value: 'value-0',
-                    },
-                    {
-                        text: {
-                            type: 'plain_text',
-                            text: 'MST (UTC-07:00)',
-                            emoji: true,
-                        },
-                        value: 'value-1',
-                    },
-                    {
-                        text: {
-                            type: 'plain_text',
-                            text: 'AFT (UTC+04:30)',
-                            emoji: true,
-                        },
-                        value: 'value-2',
-                    },
-                ],
-                action_id: 'static_select-action',
+                style: 'danger',
+                value: 'clicked_open_issue',
+                url: 'https://github.com/TeamSTEP/slack-in-your-time/issues/new',
+                action_id: 'btn-issue-action',
             },
-            label: {
-                type: 'plain_text',
-                text: 'Sender time zone',
-                emoji: true,
-            },
-        },
-        {
-            type: 'input',
-            element: {
-                type: 'plain_text_input',
-                multiline: true,
-                action_id: 'plain_text_input-action',
-            },
-            label: {
-                type: 'plain_text',
-                text: 'Message Input',
-                emoji: true,
-            },
-        },
-        {
-            type: 'actions',
-            elements: [
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: 'Parse Time',
-                        emoji: true,
-                    },
-                    value: 'click_me_123',
-                    style: 'primary',
-                    action_id: 'actionId-0',
-                },
-            ],
-        },
-        {
-            type: 'section',
-            text: {
-                type: 'mrkdwn',
-                text: '*Converted time*:',
-            },
-            fields: [
-                {
-                    type: 'plain_text',
-                    text: '*this is plain_text text*',
-                    emoji: true,
-                },
-                {
-                    type: 'plain_text',
-                    text: '*this is plain_text text*',
-                    emoji: true,
-                },
-                {
-                    type: 'plain_text',
-                    text: '*this is plain_text text*',
-                    emoji: true,
-                },
-                {
-                    type: 'plain_text',
-                    text: '*this is plain_text text*',
-                    emoji: true,
-                },
-                {
-                    type: 'plain_text',
-                    text: '*this is plain_text text*',
-                    emoji: true,
-                },
-            ],
         },
     ];
 };
