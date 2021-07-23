@@ -1,7 +1,7 @@
 import { Middleware, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { Users, EventContext } from '../model';
 import * as Helpers from '../helper';
-import { slackWebClient } from '../client';
+import { slackWebApiClient } from '../client';
 import moment from 'moment-timezone';
 
 /**
@@ -19,10 +19,14 @@ export const preventBotMessages: Middleware<SlackEventMiddlewareArgs<'message'>>
 export const messageHasTimeRef: Middleware<SlackEventMiddlewareArgs<'message'>> = async ({ body, context, next }) => {
     try {
         // note: a normal message submission should have a subtype of undefined
-        if (body.event.subtype || !body.event.text)
+        if (body.event.subtype || !body.event.text) {
             throw new Error(`Message ${body.event_id} does not have any content`);
+        }
 
-        const userInfo = (await slackWebClient.users.info({
+        if (typeof slackWebApiClient === 'undefined') {
+            throw new Error('Slack web client not initialized!');
+        }
+        const userInfo = (await slackWebApiClient.users.info({
             token: context.botToken,
             user: body.event.user,
             include_locale: true,
@@ -31,11 +35,10 @@ export const messageHasTimeRef: Middleware<SlackEventMiddlewareArgs<'message'>> 
         // note: we disable non-null assertion rules because we know Slack timezones are the same as moment tz
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const senderTimezone = moment.tz.zone(userInfo.user.tz || 'Etc/GMT')!;
-        const msgTimestamp = moment.unix(body.event_time);
         const msgText = body.event.text;
         if (!msgText) throw new Error('Could not find any text for event ' + body.event_id);
 
-        const parsedTime = Helpers.parseTimeReference(msgText, msgTimestamp.unix(), senderTimezone);
+        const parsedTime = Helpers.parseTimeReference(msgText, body.event_time, senderTimezone.name);
 
         if (!parsedTime)
             throw new Error(`Message ${body.event_id} does not mention any date.\nFull message: ${msgText}`);
@@ -44,7 +47,7 @@ export const messageHasTimeRef: Middleware<SlackEventMiddlewareArgs<'message'>> 
             senderId: body.event.user,
             sentChannel: body.event.channel,
             content: parsedTime,
-            sentTime: msgTimestamp, // UTC
+            sentTime: body.event_time, // epoch time in seconds
         } as EventContext.MessageTimeContext;
 
         context.message = messageMeta;
