@@ -50,7 +50,7 @@
     },
     "dependencies": {
         "@slack/bolt": "^3.17.1",
-        "@slack/web-api": "^7.0.2",
+        "@slack/web-api": "^6.11.2",
         "axios": "^1.6.7",
         "chrono-node": "^2.7.5",
         "express": "^4.18.2",
@@ -60,7 +60,7 @@
         "reflect-metadata": "^0.2.1"
     },
     "engines": {
-        "node": ">=14.x"
+        "node": ">=20.x"
     },
     "private": true
 }
